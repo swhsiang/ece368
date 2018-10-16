@@ -23,7 +23,7 @@ typedef struct PriorityQueue {
 PQueue *NewPriorityQueue(int capacity);
 
 // Function to Create A New Node
-PQNode *NewNode(int priority, char value, PQNode *left, PQNode *right);
+void NewNode(PQNode **node, int priority, char value, PQNode *left, PQNode *right);
 
 bool IsLeaf(PQNode *node);
 

@@ -3,29 +3,33 @@
 
 void test_pq_insert() {
   PQueue *q = NewPriorityQueue(10);
-  InsertKey(q, NewNode(10, 'a', NULL, NULL));
-  InsertKey(q, NewNode(12, 'c', NULL, NULL));
-  InsertKey(q, NewNode(3, 'z', NULL, NULL));
+  PQNode *temp, *temp2, *temp3;
+  NewNode(&temp, 10, 'a', NULL, NULL);
+  InsertKey(q, temp);
+  NewNode(&temp2, 12, 'c', NULL, NULL);
+  InsertKey(q, temp2);
+  NewNode(&temp3, 3, 'z', NULL, NULL);
+  InsertKey(q, temp3);
   assert(q->heap_size == 3);
 
-  PQNode *temp = (PQNode *)malloc(sizeof(PQNode *));
+  PQNode *temp4;
 
-  temp = GetMin(q);
-  assert(temp != NULL);
-  assert(temp->priority == 3);
-  assert(temp->value == 'z');
+  temp4 = GetMin(q);
+  assert(temp4 != NULL);
+  assert(temp4->priority == 3);
+  assert(temp4->value == 'z');
   DeleteKey(q, 0);
   assert(q->heap_size == 2);
 
-  ExtractMin(q, temp);
-  assert(temp != NULL);
-  assert(temp->priority == 10);
-  assert(temp->value == 'a');
+  ExtractMin(q, temp4);
+  assert(temp4 != NULL);
+  assert(temp4->priority == 10);
+  assert(temp4->value == 'a');
   assert(q->heap_size == 1);
 
-  temp = GetMin(q);
-  assert(temp->priority == 12);
-  assert(temp->value == 'c');
+  temp4 = GetMin(q);
+  assert(temp4->priority == 12);
+  assert(temp4->value == 'c');
 }
 
 int main(void) {
