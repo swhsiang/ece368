@@ -6,43 +6,43 @@ void SWAP(PQNode *x, PQNode *y) {
   *y = temp;
 }
 
-PQueue *NewPriorityQueue(int capacity) {
-  PQueue *q = (PQueue *)malloc(sizeof(PQueue));
-  q->capacity = capacity;
-  q->heap_arr = malloc(sizeof(PQNode *) * capacity);
+// PQueue *q = (PQueue *)malloc(sizeof(PQueue));
+void NewPriorityQueue(PQueue *pq, int capacity) {
+  pq->capacity = capacity;
+  pq->heap_arr = malloc(sizeof(PQNode *) * capacity);
   int i = 0;
   for (i = 0; i < capacity; i++) {
-    PQNode *temp = (PQNode *)malloc(sizeof(PQNode));
+    PQNode *temp = malloc(sizeof(PQNode));
     temp->left = NULL;
     temp->right = NULL;
-    q->heap_arr[i] = temp;
+    pq->heap_arr[i] = temp;
   }
-  q->heap_size = 0;
-  return q;
+  pq->heap_size = 0;
 }
 
-void NewNode(PQNode **node, int priority, char value, PQNode *left, PQNode *right) {
-  *node = malloc(sizeof(PQNode));
-  (*node)->value = value;
-  (*node)->priority = priority;
+void NewNode(PQNode *node, int priority, char value, PQNode *left,
+             PQNode *right) {
+  node->value = value;
+  node->priority = priority;
   if (left != NULL) {
-    (*node)->left = left;
+    node->left = left;
   } else {
-    (*node)->left = NULL;
+    node->left = NULL;
   }
   if (right != NULL) {
-    (*node)->right = right;
+    node->right = right;
   } else {
-    (*node)->right = NULL;
+    node->right = NULL;
   }
 }
 
 bool IsLeaf(PQNode *node) {
-  //assert(((node->left == NULL) && (node->right == NULL)) ||
+  // assert(((node->left == NULL) && (node->right == NULL)) ||
   //       ((node->left != NULL) && (node->right != NULL)));
 
-  // FIXME when jumpping into this function, even the node's left and right fields contain
-  // null pointer, they become arbitary value. In other words, the null pointers are polluted.
+  // FIXME when jumpping into this function, even the node's left and right
+  // fields contain null pointer, they become arbitary value. In other words,
+  // the null pointers are polluted.
   return (node->left == NULL) && (node->right == NULL);
 }
 

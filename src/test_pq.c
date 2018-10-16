@@ -3,13 +3,13 @@
 
 void test_pq_insert() {
   PQueue *q = NewPriorityQueue(10);
-  PQNode *temp, *temp2, *temp3;
+  PQNode temp, temp2, temp3;
   NewNode(&temp, 10, 'a', NULL, NULL);
-  InsertKey(q, temp);
+  InsertKey(q, &temp);
   NewNode(&temp2, 12, 'c', NULL, NULL);
-  InsertKey(q, temp2);
+  InsertKey(q, &temp2);
   NewNode(&temp3, 3, 'z', NULL, NULL);
-  InsertKey(q, temp3);
+  InsertKey(q, &temp3);
   assert(q->heap_size == 3);
 
   PQNode *temp4;

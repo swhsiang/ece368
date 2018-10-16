@@ -44,13 +44,14 @@ char *Load_File(char *Filename, char *ch, unsigned int *Size, int *Frequency) {
 
 // NOTE root can be NULL, make sure we handle it.
 void build_huffman_tree(PQNode *root, unsigned int Size, int *Frequency) {
-  PQueue *pq = NewPriorityQueue(Size);
+  PQueue *pq = malloc(sizeof(PQueue));
+  NewPriorityQueue(pq, Size);
   unsigned i;
   int size_counter = 0;
   for (i = 0; i < ASCII_NUM; i++) {
     if (Frequency[i] > 0) {
-      PQNode *temp;
-      NewNode(&temp, Frequency[i], (char)i, NULL, NULL);
+      PQNode *temp = malloc(sizeof(PQNode));
+      NewNode(temp, Frequency[i], (char)i, NULL, NULL);
       InsertKey(pq, temp);
       size_counter = Frequency[i] + size_counter;
     }
@@ -60,20 +61,21 @@ void build_huffman_tree(PQNode *root, unsigned int Size, int *Frequency) {
   }
 
   if ((pq->heap_size) == 1) {
-    PQNode *temp;
+    PQNode *temp = malloc(sizeof(PQNode));
     if (Frequency['\0'] == 0) {
-      NewNode(&temp, 0, '\0', NULL, NULL);
+      NewNode(temp, 0, '\0', NULL, NULL);
     } else {
-      NewNode(&temp, 0, '\0', NULL, NULL);
+      NewNode(temp, 0, '\0', NULL, NULL);
     }
     InsertKey(pq, temp);
   }
 
   while (pq->heap_size > 1) {
-    PQNode left, right, *temp;
-    ExtractMin(pq, &left);
-    ExtractMin(pq, &right);
-    NewNode(&temp, left.priority + right.priority, '\0', &left, &right);
+    PQNode *left = malloc(sizeof(PQNode)), *right = malloc(sizeof(PQNode)),
+           *temp = malloc(sizeof(PQNode));
+    ExtractMin(pq, left);
+    ExtractMin(pq, right);
+    NewNode(temp, left->priority + right->priority, '\0', left, right);
     InsertKey(pq, temp);
   }
 

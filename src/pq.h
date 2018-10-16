@@ -20,10 +20,10 @@ typedef struct PriorityQueue {
   PQNode **heap_arr;
 } PQueue;
 
-PQueue *NewPriorityQueue(int capacity);
+void NewPriorityQueue(PQueue *pq, int capacity);
 
 // Function to Create A New Node
-void NewNode(PQNode **node, int priority, char value, PQNode *left, PQNode *right);
+void NewNode(PQNode *node, int priority, char value, PQNode *left, PQNode *right);
 
 bool IsLeaf(PQNode *node);
 

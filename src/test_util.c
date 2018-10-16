@@ -28,8 +28,8 @@ void test_build_huffman_tree(char *Filename) {
   assert(frequency[97] == 3);
   assert(frequency[10] == 1);
 
-  PQNode *root;
-  NewNode(&root, 0, '\0', NULL, NULL);
+  PQNode *root = malloc(sizeof(PQNode));
+  NewNode(root, 0, '\0', NULL, NULL);
   build_huffman_tree(root, numberOfChars, frequency);
 
   assert(root != NULL);
@@ -54,8 +54,8 @@ void test_huffman_tree(char *Filename) {
   assert(frequency[97] == 3);
   assert(frequency[10] == 1);
 
-  PQNode *root;
-  NewNode(&root, 0, '\0', NULL, NULL);
+  PQNode *root = malloc(sizeof(PQNode));
+  NewNode(root, 0, '\0', NULL, NULL);
   build_huffman_tree(root, numberOfChars, frequency);
 
   assert(root != NULL);
@@ -82,8 +82,8 @@ void test_build_codebook(char *Filename) {
   assert(frequency[97] == 3);
   assert(frequency[10] == 1);
 
-  PQNode *root;
-  NewNode(&root, 0, '\0', NULL, NULL);
+  PQNode *root = malloc(sizeof(PQNode));
+  NewNode(root, 0, '\0', NULL, NULL);
   build_huffman_tree(root, numberOfChars, frequency);
 
   assert(root != NULL);
