@@ -12,15 +12,16 @@ void NewPriorityQueue(PQueue *pq, int capacity) {
   pq->heap_arr = malloc(sizeof(PQNode *) * capacity);
   int i = 0;
   for (i = 0; i < capacity; i++) {
-    PQNode *temp = malloc(sizeof(PQNode));
+    PQNode *temp = (PQNode *)malloc(sizeof(PQNode));
     temp->left = NULL;
     temp->right = NULL;
     pq->heap_arr[i] = temp;
   }
+  pq->heap_arr[0]->value = 0;
   pq->heap_size = 0;
 }
 
-void NewNode(PQNode *node, int priority, char value, PQNode *left,
+void NewNode(PQNode *node, int priority, unsigned int value, PQNode *left,
              PQNode *right) {
   node->value = value;
   node->priority = priority;
@@ -69,11 +70,13 @@ void MinHeapify(PQueue *pqueue, int index) {
   }
 };
 
+void UpwardMinHeapify(PQueue *pqueue, int index){
+
+};
+
 void ExtractMin(PQueue *pqueue, PQNode *node) {
-  if (pqueue->heap_size <= 0) {
-    node = NULL;
-    return;
-  };
+  assert(pqueue->heap_size > 0);
+
   if (pqueue->heap_size == 1) {
     pqueue->heap_size--;
     *node = *pqueue->heap_arr[0];
@@ -108,6 +111,8 @@ void DecreaseKey(PQueue *pqueue, int index, int newVal) {
 // Deletes a key stored at index i
 void DeleteKey(PQueue *pqueue, int index) {
   DecreaseKey(pqueue, index, INT_MIN);
+  // FIXME will the temp variable be deleted when the life cycle of this
+  // function comes to its end?
   PQNode temp;
   ExtractMin(pqueue, &temp);
 };
@@ -124,9 +129,13 @@ void InsertKey(PQueue *pqueue, PQNode *node) {
   pqueue->heap_arr[i] = node;
 
   // Fix the max heap property if it is violated
-  while (i != 0 && pqueue->heap_arr[Parent(i)]->priority >
-                       pqueue->heap_arr[i]->priority) {
-    SWAP(pqueue->heap_arr[i], pqueue->heap_arr[Parent(i)]);
-    i = Parent(i);
+  while (i > 0) {
+    // The formula of sift_up affects how the tree is going to be built
+    // (i - 1) / 2 will make the heap tree more in-balanced
+    // i / 2 makes the tree more balanced 
+    if (pqueue->heap_arr[i / 2]->priority > pqueue->heap_arr[i]->priority) {
+      SWAP(pqueue->heap_arr[i], pqueue->heap_arr[i / 2]);
+    }
+    i = i / 2;
   }
 };
