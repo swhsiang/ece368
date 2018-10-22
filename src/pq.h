@@ -24,9 +24,9 @@ typedef struct PriorityQueue {
   PQNode **heap_arr;
 } PQueue;
 
-void NewPriorityQueue(PQueue *pq, int capacity);
+//void NewPriorityQueue(PQueue *pq, int capacity);
 
-PQueue *CreateAndBuildPriorityQueue(int capacity, unsigned int *value,
+PQueue *CreateAndBuildPriorityQueue(int size, unsigned int *value,
                                     int *frequency);
 
 PQNode *newNode(unsigned int value, int freq);
@@ -36,8 +36,8 @@ PQNode *popMin(PQueue *pqueue);
 void InsertNodeOnHeap(PQueue *pq, PQNode *node);
 
 // Function to Create A New Node
-void NewNode(PQNode *node, int priority, unsigned int value, PQNode *left,
-             PQNode *right);
+//void NewNode(PQNode *node, int priority, unsigned int value, PQNode *left,
+//             PQNode *right);
 
 bool IsLeaf(PQNode *node);
 
@@ -49,15 +49,15 @@ int LeftChild(int index);
 
 int RightChild(int index);
 
-void ExtractMin(PQueue *pqueue, PQNode *node);
+//void ExtractMin(PQueue *pqueue, PQNode *node);
 
-void DecreaseKey(PQueue *pqueue, int index, int newVal);
+//void DecreaseKey(PQueue *pqueue, int index, int newVal);
 
 // Returns the minimum key (key at root) from Min heap
-PQNode *GetMin(PQueue *pqueue);
+//PQNode *GetMin(PQueue *pqueue);
 
 // Deletes a key stored at index i
-void DeleteKey(PQueue *pqueue, int index);
+//void DeleteKey(PQueue *pqueue, int index);
 
-void InsertKey(PQueue *pqueue, PQNode *node);
+//void InsertKey(PQueue *pqueue, PQNode *node);
 #endif

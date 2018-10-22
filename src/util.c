@@ -3,13 +3,14 @@
 /*
  * Count how many characters appear in the given file include EOF.
  */
-char *Load_File(char *Filename, char *ch, unsigned int *Size,
-                unsigned *DistinctChars, int *Frequency) {
+char *Load_File(char *Filename, unsigned int *Size, unsigned *DistinctChars,
+                int *Frequency) {
   // FIXME should accept larger input!
   int ascii = 0;
   unsigned int counter = 0;
   long int capacity = INIT_STRING;
   unsigned distinct = 0;
+  char *ch = malloc(sizeof(char) * INIT_STRING);
   FILE *fptr;
 
   fptr = fopen(Filename, "r");
@@ -44,19 +45,83 @@ char *Load_File(char *Filename, char *ch, unsigned int *Size,
   fclose(fptr);
   return ch;
 }
+char *LoadFile(char *Filename, unsigned int *Size, unsigned *NumDistinctChar,
+               unsigned int **DistinctChars, int **Frequency) {
+  // FIXME should accept larger input!
+  int ascii = 0;
+  unsigned int counter = 0;
+  long int capacity = INIT_STRING;
+  unsigned distinct = 0;
+  char *ch = malloc(sizeof(char) * INIT_STRING);
 
+  int *freq = (int *)malloc(sizeof(int) * ASCII_NUM);
+  int i = 0;
+  for (i = 0; i < ASCII_NUM; i++) {
+    freq[i] = 0;
+  }
+
+  FILE *fptr;
+
+  fptr = fopen(Filename, "r");
+
+  if (fptr == NULL) {
+    printf("Cannot open the file %s\n", Filename);
+    exit(1);
+  }
+
+  ascii = getc(fptr);
+  while (ascii != EOF) {
+    if (counter >= capacity) {
+      capacity = (long int)(((float)capacity) * (1.0 + CHAR_GROW_FACTOR));
+      char *temp = (char *)realloc(ch, capacity * sizeof(char));
+      assert(temp != NULL);
+      ch = temp;
+    }
+    ch[counter] = ascii;
+    if (freq[ascii] == 0) distinct++;
+    freq[ascii] = freq[ascii] + 1;
+    counter++;
+    ascii = getc(fptr);
+  }
+
+  // NOTE Take pseudo EOF into account
+  int *temp_freq = (int *)malloc(sizeof(int) * (distinct + 1));
+  unsigned int *temp_ch =
+      (unsigned int *)malloc(sizeof(unsigned int) * (distinct + 1));
+  int j = 0;
+  for (i = 0, j = 0; i < ASCII_NUM; i++) {
+    if (freq[i] > 0) {
+      temp_ch[j] = i;
+      temp_freq[j] = freq[i];
+      j++;
+    }
+  }
+
+  // NOTE add pseudo EOF
+  temp_ch[j] = 256;
+  temp_freq[j] = 1;
+
+  ch[counter] = '\0';
+  *Size = counter;
+  *NumDistinctChar = distinct + 1;
+  *DistinctChars = temp_ch;
+  *Frequency = temp_freq;
+
+  fclose(fptr);
+  return ch;
+}
 // NOTE root can be NULL, make sure we handle it.
 // Size is exact size + 1 (pseudo EOF);
+/*
 void build_huffman_tree(PQNode *root, unsigned int DistinctChars,
                         int *Frequency) {
-  PQueue *pq = malloc(sizeof(PQueue));
+  PQueue *pq = (PQueue *)malloc(sizeof(PQueue));
   NewPriorityQueue(pq, DistinctChars);
-  int i, char_counter;
-
-
+  int i;
+  int char_counter;
 
   for (i = MAX_CHAR - 1, char_counter = 0;
-       i >= 0 && char_counter <= DistinctChars; i--) {
+       i >= 0 && char_counter < DistinctChars; i--) {
     if (Frequency[i] > 0) {
       PQNode *temp = malloc(sizeof(PQNode));
       NewNode(temp, Frequency[i], i, NULL, NULL);
@@ -66,6 +131,7 @@ void build_huffman_tree(PQNode *root, unsigned int DistinctChars,
   }
 
   if ((pq->heap_size) == 1) {
+    // FIXME think about adding pseudo EOF.
     PQNode *temp = malloc(sizeof(PQNode));
     if (Frequency['\0'] == 0) {
       NewNode(temp, 0, '\0', NULL, NULL);
@@ -88,15 +154,36 @@ void build_huffman_tree(PQNode *root, unsigned int DistinctChars,
 
   ExtractMin(pq, root);
 };
+*/
+
+PQNode *build_huffman_trie(unsigned int NumDistinctChar,
+                           unsigned int *DistincChars, int *Frequency) {
+  PQueue *pq = CreateAndBuildPriorityQueue(NumDistinctChar, DistincChars, Frequency);
+
+  PQNode *left, *right, *temp;
+
+  while (pq->heap_size != 1) {
+    left = popMin(pq);
+    right = popMin(pq);
+    temp = newNode('\0', left->priority + right->priority);
+    temp->left = left;
+    temp->right = right;
+    InsertNodeOnHeap(pq, temp);
+  }
+
+  return popMin(pq);
+};
 
 // FIXME we can use fast heap construction to optimize this function
 // the complexity will be O(n) instead of O(n * log n);
-void build_codebook(char **arr_string, PQNode *node, char *binary) {
+void _build_codebook(char **arr_string, PQNode *node, char *binary) {
   if (node == NULL) {
     return;
   }
   if (node->right == NULL && node->left == NULL) {
+    free(arr_string[node->value]);
     arr_string[node->value] = binary;
+    assert(arr_string[node->value] != NULL);
     return;
   }
   // FIXME memory allocation can be optimized
@@ -109,15 +196,27 @@ void build_codebook(char **arr_string, PQNode *node, char *binary) {
   strcpy(right_str, binary);
   strcat(right_str, "1");
 
-  if (!(node->left == NULL)) {
-    assert(node->left->value != 4294967259);
-    build_codebook(arr_string, node->left, left_str);
-  }
-  if (!(node->right == NULL)) {
-    assert(node->right->value != 4294967259);
-    build_codebook(arr_string, node->right, right_str);
-  }
+  assert(node->left->value != 4294967259);
+  _build_codebook(arr_string, node->left, left_str);
+  assert(node->right->value != 4294967259);
+  _build_codebook(arr_string, node->right, right_str);
 };
+
+void build_codebook(char **arr_string, unsigned int *DistinctChars,
+                    unsigned int NumDistinctChar, PQNode *node) {
+  char **temp_codebook = (char **)malloc(sizeof(char *) * ASCII_NUM);
+  int i = 0;
+  for (i = 0; i < ASCII_NUM; i++) {
+    temp_codebook[i] = (char *)malloc(sizeof(char));
+  }
+  _build_codebook(temp_codebook, node, "");
+
+  for (i = 0; i < NumDistinctChar; i++) {
+    assert(temp_codebook[DistinctChars[i]] != NULL);
+    arr_string[i] = temp_codebook[DistinctChars[i]];
+  }
+  free(temp_codebook);
+}
 
 void print_huffman_tree(PQNode *node) {
   if (node == NULL) {
@@ -134,51 +233,102 @@ void print_huffman_tree(PQNode *node) {
   if (node->right != NULL) print_huffman_tree(node->right);
 };
 
-void Generate_Binary(char *dest, char *source, unsigned int *Size,
-                     char **codebook) {
-  // FIXME store the info of codebook in the begining of binary
+void GenerateBinaryHeader(char *dest, unsigned int *BinarySize,
+                          char **codebook){
+    // FIXME store the info of codebook in the begining of binary
+
+};
+
+// https://stackoverflow.com/questions
+// /759707/efficient-way-of-storing-huffman-tree
+// tree_path has been allocated. ex 9 bit + 1 terminator + 1 char itself
+void encodeNode(PQNode *node, char *tree_path) {
+  if (!(node->left) && !(node->right)) {
+    strcat(tree_path, "1");
+    // ??????
+    // strcat(tree_path, node->value);
+  } else {
+  }
+}
+
+// Generate binary of original file
+char *GenerateBinaryBody(char *source, unsigned int sourceSize,
+                         unsigned int *BinarySize, char **codebook,
+                         unsigned *paddingLen) {
   int i = 0, j;
   int lenOfCode = 0;
   char buffer = 0;
   unsigned buffer_len = 0;
   unsigned int bytesOfBinary = 0;
-  // capacity == number of allocated space include terminator \0
-  unsigned int capacity = *Size;
-  for (; i < *Size; i++) {
+  unsigned int capacity = INIT_STRING;
+  char *dest = malloc(sizeof(char) * capacity);
+
+  for (; i < sourceSize; i++) {
     lenOfCode = strlen(codebook[source[i]]);
     for (j = 0; j < lenOfCode; j++) {
       assert((codebook[source[i]][j] == '0' || codebook[source[i]][j] == '1'));
-      if (codebook[source[i]][j] == '0') {
-        buffer = buffer | (0 << buffer_len);
-      } else if (codebook[source[i]][j] == '1') {
-        buffer = buffer | (1 << buffer_len);
-      }
+      buffer = codebook[source[i]][j] | (buffer << 1);
 
       buffer_len++;
       if (buffer_len >= 8) {
-        // increase the Size of dest by 1 (byte)
-        // check the overflow of dest?
-
-        if (bytesOfBinary > capacity - 1) {
-          // realloc
+        // examine the boundary of dest
+        if (bytesOfBinary >= capacity - 1) {
           capacity = (unsigned int)(((float)(capacity - 1)) *
                                         (1.0 + CHAR_GROW_FACTOR) +
                                     1.0);
           char *temp = realloc(dest, sizeof(char) * capacity);
           assert(temp != NULL);
           dest = temp;
-          // FIXME Should I use \0?
           dest[capacity - 1] = '\0';
         }
-        dest[bytesOfBinary - 1] = buffer;
+
+        dest[bytesOfBinary] = buffer;
         bytesOfBinary++;
         buffer = 0;
       }
-      // do padding if the buffer is not full
-      if (buffer_len > 0) {
-        dest[bytesOfBinary - 1] = (buffer << (8 - buffer_len));
-      }
-      dest[bytesOfBinary] = '\0';
     }
   }
+
+  // FIXME
+  // do padding if the buffer is not full
+  if (buffer_len > 0) {
+    if (bytesOfBinary >= capacity - 1) {
+      capacity =
+          (unsigned int)(((float)(capacity - 1)) * (1.0 + CHAR_GROW_FACTOR) +
+                         1.0);
+      char *temp = realloc(dest, sizeof(char) * capacity);
+      assert(temp != NULL);
+      dest = temp;
+      dest[capacity - 1] = '\0';
+    }
+    dest[bytesOfBinary] = (buffer << (8 - buffer_len));
+    bytesOfBinary++;
+  }
+  dest[bytesOfBinary] = '\0';
+
+  *BinarySize = bytesOfBinary;
+  return dest;
 };
+
+void GenerateBinary(char *dest, char *source, unsigned int sourceSize,
+                    unsigned int *BinarySize, char **codebook) {
+  // pseudo EOF or add padding info at the front of the file
+  unsigned int headerSize = 0;
+  GenerateBinaryHeader(dest, &headerSize, codebook);
+
+  // FIXME size ?? binary size?? if there already exist some content in the
+  // dest?? don't overwrite it.
+  char *body = malloc(sizeof(char) * INIT_STRING);
+  unsigned int bodyBinarySize = 0;
+  unsigned paddingLength = 0;
+  body = GenerateBinaryBody(source, sourceSize, &bodyBinarySize, codebook,
+                            &paddingLength);
+
+  char *buffer = realloc(dest, headerSize + bodyBinarySize + 1);
+  assert(buffer != NULL);
+  dest = buffer;
+
+  memcpy(dest + headerSize, body, bodyBinarySize + 1);
+};
+
+void WriteFile(char *Filename, char *bCh, unsigned int Size) {}
