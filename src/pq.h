@@ -1,8 +1,8 @@
+#include <assert.h>
 #include <limits.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
-#include <assert.h>
 
 /* This Priority Queue is implemented based on Binary Heap (Min Heap) */
 
@@ -26,8 +26,18 @@ typedef struct PriorityQueue {
 
 void NewPriorityQueue(PQueue *pq, int capacity);
 
+PQueue *CreateAndBuildPriorityQueue(int capacity, unsigned int *value,
+                                    int *frequency);
+
+PQNode *newNode(unsigned int value, int freq);
+
+PQNode *popMin(PQueue *pqueue); 
+
+void InsertNodeOnHeap(PQueue *pq, PQNode *node);
+
 // Function to Create A New Node
-void NewNode(PQNode *node, int priority, unsigned int value, PQNode *left, PQNode *right);
+void NewNode(PQNode *node, int priority, unsigned int value, PQNode *left,
+             PQNode *right);
 
 bool IsLeaf(PQNode *node);
 

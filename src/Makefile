@@ -7,10 +7,22 @@ clean-test-pq:
 	rm test_out
 
 test-util:
-	clang -g -o pq.o -c pq.c
+	clang -g -c pq.c -o pq.o 
+	clang -g -c tree.c -o tree.o 
 	clang -g -o util.o -c util.c
-	clang -g test_util.c util.o pq.o -o util_out
+	clang -g test_util.c tree.o util.o pq.o -o util_out
 
 clean-test-util:
 	rm *.o
 	rm util_out
+
+huff:
+	clang -g -c pq.c -o pq.o 
+	clang -g -c tree.c -o tree.o 
+	clang -g -o util.o -c util.c
+	clang -g huff.c tree.o util.o pq.o -o huff
+
+clean-huff:
+	rm *.o
+	rm huff
+

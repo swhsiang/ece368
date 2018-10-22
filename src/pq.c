@@ -9,7 +9,7 @@ void SWAP(PQNode *x, PQNode *y) {
 // PQueue *q = (PQueue *)malloc(sizeof(PQueue));
 void NewPriorityQueue(PQueue *pq, int capacity) {
   pq->capacity = capacity;
-  pq->heap_arr = malloc(sizeof(PQNode *) * capacity);
+  pq->heap_arr = (PQNode **)malloc(sizeof(PQNode *) * capacity);
   int i = 0;
   for (i = 0; i < capacity; i++) {
     PQNode *temp = (PQNode *)malloc(sizeof(PQNode));
@@ -20,6 +20,61 @@ void NewPriorityQueue(PQueue *pq, int capacity) {
   pq->heap_arr[0]->value = 0;
   pq->heap_size = 0;
 }
+
+PQNode *newNode(unsigned int value, int freq) {
+  PQNode *temp = (PQNode *)malloc(sizeof(PQNode));
+  temp->value = value;
+  temp->priority = freq;
+  temp->left = NULL;
+  temp->right = NULL;
+  return temp;
+}
+
+void BuildMinHeap(PQueue *pq) {
+  int n = pq->heap_size - 1;
+  int i = 0;
+  for (i = Parent(n); i >= 0; --i) {
+    MinHeapify(pq, i);
+  }
+}
+
+PQueue *CreateAndBuildPriorityQueue(int capacity, unsigned int *value,
+                                    int *frequency) {
+  PQueue *pq = (PQueue *)malloc(sizeof(PQueue));
+  pq->capacity = capacity;
+  pq->heap_arr = (PQNode **)malloc(sizeof(PQNode *) * capacity);
+  int i = 0;
+  for (i = 0; i < capacity; i++) {
+    pq->heap_arr[i] = newNode(value[i], frequency[i]);
+  }
+  pq->heap_size = capacity;
+  BuildMinHeap(pq);
+  return pq;
+}
+
+void SwapPQNode(PQNode **a, PQNode **b) {
+  PQNode *temp = *a;
+  *a = *b;
+  *b = temp;
+}
+
+void MinHeapify(PQueue *pq, int index) {
+  int smallest = index;
+  int left = LeftChild(index);
+  int right = RightChild(index);
+  if (left < pq->heap_size &&
+      pq->heap_arr[left]->priority < pq->heap_arr[smallest]->priority)
+    smallest = left;
+
+  if (right < pq->heap_size &&
+      pq->heap_arr[right]->priority < pq->heap_arr[smallest]->priority)
+    smallest = right;
+
+  if (smallest != index) {
+    SwapPQNode(&pq->heap_arr[smallest], &pq->heap_arr[index]);
+    MinHeapify(pq, smallest);
+  }
+};
 
 void NewNode(PQNode *node, int priority, unsigned int value, PQNode *left,
              PQNode *right) {
@@ -44,7 +99,7 @@ bool IsLeaf(PQNode *node) {
   // FIXME when jumpping into this function, even the node's left and right
   // fields contain null pointer, they become arbitary value. In other words,
   // the null pointers are polluted.
-  return (node->left == NULL) && (node->right == NULL);
+  return !(node->left) && !(node->right);
 }
 
 // Argument index should not be zero.
@@ -54,25 +109,14 @@ int LeftChild(int index) { return (2 * index + 1); };
 
 int RightChild(int index) { return (2 * index + 2); };
 
-void MinHeapify(PQueue *pqueue, int index) {
-  int l = LeftChild(index);
-  int r = LeftChild(index);
-  int biggest = index;
-  if (l < pqueue->heap_size &&
-      pqueue->heap_arr[l]->priority < pqueue->heap_arr[index]->priority)
-    biggest = l;
-  if (r < pqueue->heap_size &&
-      pqueue->heap_arr[r]->priority < pqueue->heap_arr[biggest]->priority)
-    biggest = r;
-  if (biggest != index) {
-    SWAP(pqueue->heap_arr[index], pqueue->heap_arr[biggest]);
-    MinHeapify(pqueue, biggest);
-  }
-};
-
-void UpwardMinHeapify(PQueue *pqueue, int index){
-
-};
+PQNode *popMin(PQueue *pqueue) {
+  assert(pqueue->heap_size > 0);
+  PQNode *temp = pqueue->heap_arr[0];
+  pqueue->heap_arr[0] = pqueue->heap_arr[pqueue->heap_size - 1];
+  --pqueue->heap_size;
+  MinHeapify(pqueue, 0);
+  return temp;
+}
 
 void ExtractMin(PQueue *pqueue, PQNode *node) {
   assert(pqueue->heap_size > 0);
@@ -117,6 +161,18 @@ void DeleteKey(PQueue *pqueue, int index) {
   ExtractMin(pqueue, &temp);
 };
 
+void InsertNodeOnHeap(PQueue *pq, PQNode *node) {
+  ++pq->heap_size;
+  int i = pq->heap_size - 1;
+
+  while (i && node->priority < pq->heap_arr[Parent(i)]->priority) {
+    pq->heap_arr[i] = pq->heap_arr[Parent(i)];
+    i = Parent(i);
+  }
+
+  pq->heap_arr[i] = node;
+}
+
 void InsertKey(PQueue *pqueue, PQNode *node) {
   if (pqueue->heap_size == pqueue->capacity) {
     printf("\nOverflow: Could not insertKey\n");
@@ -132,7 +188,7 @@ void InsertKey(PQueue *pqueue, PQNode *node) {
   while (i > 0) {
     // The formula of sift_up affects how the tree is going to be built
     // (i - 1) / 2 will make the heap tree more in-balanced
-    // i / 2 makes the tree more balanced 
+    // i / 2 makes the tree more balanced
     if (pqueue->heap_arr[i / 2]->priority > pqueue->heap_arr[i]->priority) {
       SWAP(pqueue->heap_arr[i], pqueue->heap_arr[i / 2]);
     }
