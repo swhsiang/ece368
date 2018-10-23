@@ -42,7 +42,7 @@ void print_huffman_tree(PQNode *node);
  * Should store the codebook in the begining of the binary.
  */
 void GenerateBinary(FILE *fptr, char *source, unsigned int sourceSize,
-                    char **codebook, unsigned int codebookSize, PQNode *root);
+                    char **codebook, unsigned char codebookSize, PQNode *root);
 
 void WriteFile(char *Filename, char *source, unsigned int sourceSize,
                char **codebook, unsigned char codebookSize, PQNode *root);

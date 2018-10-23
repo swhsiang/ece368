@@ -330,16 +330,14 @@ unsigned padding(FILE *fptr, unsigned char *buffer, unsigned char *buffer_len) {
  * 2. the begin of tree.
  * 3. content
  */
-void GenerateBinaryHeader(FILE *fptr, unsigned int *BinarySize, char **codebook,
+void GenerateBinaryHeader(FILE *fptr, unsigned int *headerSize, char **codebook,
                           unsigned int leaf_counter, PQNode *root,
                           unsigned *paddingNum) {
   assert(leaf_counter < 257 && leaf_counter >= 2);
 
   // Generate header info
   unsigned char firstByte = (unsigned char)(leaf_counter & 0xFF);
-  // FIXME remember to update this field after compression done.
-  unsigned char secondByte;
-  secondByte = 0;
+  unsigned char secondByte = 0;
   int i = 0;
 
   fwrite(&firstByte, sizeof(unsigned char), 1, fptr);
@@ -369,7 +367,7 @@ void GenerateBinaryBody(FILE *fptr, char *source, unsigned int sourceSize,
 };
 
 void GenerateBinary(FILE *fptr, char *source, unsigned int sourceSize,
-                    char **codebook, unsigned int codebookSize, PQNode *root) {
+                    char **codebook, unsigned char codebookSize, PQNode *root) {
   unsigned int headerSize = 0;
   unsigned int leaf_counter = codebookSize;
   unsigned headerPaddingLength = 0;
@@ -383,6 +381,7 @@ void GenerateBinary(FILE *fptr, char *source, unsigned int sourceSize,
                      &bodyPaddingLength);
   assert(bodyPaddingLength < 8);
 
+  // Update second byte for storing the padding info
   unsigned char totalPadding = (headerPaddingLength << 4) | (bodyPaddingLength);
   fseek(fptr, 1, SEEK_SET);
   unsigned char buffer = 0, buffer_len = 0;
