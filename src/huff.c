@@ -18,13 +18,13 @@ int main(int Argc, char **Argv) {
   // 2. Read file
   unsigned int fileSize = 0;
   unsigned numUniqueChar = 0;
-  unsigned char *numUniqueCharList =
+  unsigned char *uniqueCharList =
       (unsigned char *)malloc(sizeof(unsigned char));
   int *frequency = (int *)malloc(sizeof(int));
   char *ch = malloc(sizeof(char) * INIT_STRING);
 
   // no need using pseudo eof
-  ch = Load_File(Argv[1], &fileSize, &numUniqueChar, &numUniqueCharList,
+  ch = Load_File(Argv[1], &fileSize, &numUniqueChar, &uniqueCharList,
                  &frequency);
 
   if (fileSize == 0) {
@@ -35,7 +35,7 @@ int main(int Argc, char **Argv) {
   //    with value of frequency onto Priority Queue (building Trie).
   // Build huffman tree
   PQNode *root = (PQNode *)malloc(sizeof(PQNode));
-  root = build_huffman_trie(numUniqueChar, numUniqueCharList, frequency);
+  root = build_huffman_trie(numUniqueChar, uniqueCharList, frequency);
 
   char **codebook = (char **)malloc(sizeof(char *) * numUniqueChar);
   int i = 0;
@@ -43,10 +43,10 @@ int main(int Argc, char **Argv) {
     codebook[i] = (char *)malloc(sizeof(char));
   }
 
-  build_codebook(codebook, numUniqueCharList, numUniqueChar, root);
+  build_codebook(codebook, uniqueCharList, numUniqueChar, root);
 
-  //for (i=0; i < numUniqueChar; i++) {
-  //  printf("%c: %s\n", numUniqueCharList[i], codebook[numUniqueCharList[i]]);
+  // for (i=0; i < numUniqueChar; i++) {
+  //  printf("%c: %s\n", uniqueCharList[i], codebook[uniqueCharList[i]]);
   //}
 
   // 6. Output the trie to xxx.huff
@@ -59,7 +59,7 @@ int main(int Argc, char **Argv) {
   strcpy(newFilename, Argv[1]);
   strcat(newFilename, ".huff");
 
-  WriteFile(newFilename, ch, fileSize, codebook, *numUniqueCharList, root);
+  WriteFile(newFilename, ch, fileSize, codebook, numUniqueChar, root);
 
   // FIXME free allocated memory
   free(newFilename);
@@ -69,7 +69,7 @@ int main(int Argc, char **Argv) {
     free(codebook[i]);
   }
   free(codebook);
-  free(numUniqueCharList);
+  free(uniqueCharList);
   free(root);
 
   return 1;

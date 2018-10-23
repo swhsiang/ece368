@@ -26,3 +26,11 @@ clean-huff:
 	rm *.o
 	rm huff
 
+unhuff:
+	clang -g -o util.o -c util.c
+	clang -g unhuff.c util.o -o unhuff
+
+clean-huff:
+	rm *.o
+	rm unhuff
+
