@@ -26,7 +26,7 @@ typedef struct PriorityQueue {
 
 //void NewPriorityQueue(PQueue *pq, int capacity);
 
-PQueue *CreateAndBuildPriorityQueue(int size, unsigned int *value,
+PQueue *CreateAndBuildPriorityQueue(int size, unsigned char *value,
                                     int *frequency);
 
 PQNode *newNode(unsigned int value, int freq);

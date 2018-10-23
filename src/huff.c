@@ -16,72 +16,40 @@ int main(int Argc, char **Argv) {
   }
 
   // 2. Read file
-  unsigned int numberOfChars = 0;
-  unsigned numDistinctChar = 0;
-  unsigned int *distinctChars =
-      (unsigned int *)malloc(sizeof(unsigned int));
+  unsigned int fileSize = 0;
+  unsigned numUniqueChar = 0;
+  unsigned char *numUniqueCharList =
+      (unsigned char *)malloc(sizeof(unsigned char));
   int *frequency = (int *)malloc(sizeof(int));
   char *ch = malloc(sizeof(char) * INIT_STRING);
 
-  ch = LoadFile(Argv[1], &numberOfChars, &numDistinctChar, &distinctChars,
-                &frequency);
- 
-  if (numberOfChars == 0) {
-    assert(numberOfChars != 0);
+  // no need using pseudo eof
+  ch = Load_File(Argv[1], &fileSize, &numUniqueChar, &numUniqueCharList,
+                 &frequency);
+
+  if (fileSize == 0) {
+    assert(fileSize != 0);
   }
 
   // 4. Count the frequency of each character and push characters
   //    with value of frequency onto Priority Queue (building Trie).
-
-
-  // FIXME remove me. The following block created bug
-  // set pseudo EOF as the last character
-  // add pseudo EOF at the end
-  /*
-  numDistinctChar++;
-  int *temp_freq = (int *) malloc(numDistinctChar * sizeof(int));
-  assert(temp_freq != NULL);
-  memcpy(temp_freq, frequency, numDistinctChar - 1);
-  temp_freq[numDistinctChar - 1] = 1;
-  free(frequency);
-  frequency = temp_freq;
-
-  unsigned int *temp_chars =
-      (unsigned int *) malloc(sizeof(unsigned int) * numDistinctChar);
-  assert(temp_chars != NULL);
-  memcpy(temp_chars, distinctChars, numDistinctChar - 1);
-  temp_chars[numDistinctChar - 1] = '$';
-  free(distinctChars);
-  distinctChars = temp_chars;
-  */
-
-  PQNode *root = (PQNode *) malloc(sizeof(PQNode));
   // Build huffman tree
-  root = build_huffman_trie(numDistinctChar, distinctChars, frequency);
+  PQNode *root = (PQNode *)malloc(sizeof(PQNode));
+  root = build_huffman_trie(numUniqueChar, numUniqueCharList, frequency);
 
-  char **codebook = (char **)malloc(sizeof(char *) * numDistinctChar);
+  char **codebook = (char **)malloc(sizeof(char *) * numUniqueChar);
   int i = 0;
-  for (i = 0; i < numDistinctChar; i++) {
-    codebook[i] = (char *)malloc(sizeof(char *));
+  for (i = 0; i < numUniqueChar; i++) {
+    codebook[i] = (char *)malloc(sizeof(char));
   }
 
-  // build_codebook(codebook, root, "");
-  build_codebook(codebook, distinctChars, numDistinctChar, root);
+  build_codebook(codebook, numUniqueCharList, numUniqueChar, root);
 
-  // FIXME remove me
-  int j = 0;
-  for (j = 0; j < numDistinctChar; j++) {
-    printf("ASCII char: (%4d, %3d) frequency: %3d, binary: %-10s\n", j,
-           distinctChars[j], frequency[j], codebook[j]);
-  }
+  //for (i=0; i < numUniqueChar; i++) {
+  //  printf("%c: %s\n", numUniqueCharList[i], codebook[numUniqueCharList[i]]);
+  //}
 
   // 6. Output the trie to xxx.huff
-  // NOTE think about terminator \0
-  numberOfChars = numberOfChars + 1;
-  char *bCh = malloc(sizeof(char) * numberOfChars);
-  unsigned int sizeofBinary = 0;
-  // GenerateBinary(bCh, ch, numberOfChars, &sizeofBinary, codebook);
-
   /*
    * newFilename = Filename + ".huff" + '\0'
    */
@@ -91,8 +59,18 @@ int main(int Argc, char **Argv) {
   strcpy(newFilename, Argv[1]);
   strcat(newFilename, ".huff");
 
-  // WriteFIle(newFilename, bCh, numberOfChars);
+  WriteFile(newFilename, ch, fileSize, codebook, *numUniqueCharList, root);
 
   // FIXME free allocated memory
+  free(newFilename);
+  free(ch);
+  free(frequency);
+  for (i = 0; i < numUniqueChar; i++) {
+    free(codebook[i]);
+  }
+  free(codebook);
+  free(numUniqueCharList);
+  free(root);
+
   return 1;
 }

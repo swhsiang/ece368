@@ -2,6 +2,8 @@
 
 PQNode *newNode(unsigned int value, int freq) {
   PQNode *temp = (PQNode *)malloc(sizeof(PQNode));
+  // FIXME refactor temp->value, unsigned int is too big since we don't need
+  // pseudo eof anymore.
   temp->value = value;
   temp->priority = freq;
   temp->left = NULL;
@@ -25,7 +27,7 @@ PQueue *createPriorityQueue(int capacity) {
   return pq;
 }
 
-PQueue *CreateAndBuildPriorityQueue(int size, unsigned int *value,
+PQueue *CreateAndBuildPriorityQueue(int size, unsigned char *value,
                                     int *frequency) {
   PQueue *pq = createPriorityQueue(size);
   int i = 0;
