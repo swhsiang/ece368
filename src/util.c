@@ -292,15 +292,13 @@ void encodeNode(FILE *fptr, PQNode *node, unsigned char *buffer,
   if (!(node->left) && !(node->right)) {
     char bit = '1';
     WriteBit(fptr, buffer, buffer_len, bit);
-    WriteByte(fptr, buffer, buffer_len, node->ch);
+    WriteByte(fptr, buffer, buffer_len, node->value & 0xFF);
   }
   char bit = '0';
   WriteBit(fptr, buffer, buffer_len, bit);
   encodeNode(fptr, node->left, buffer, buffer_len);
   encodeNode(fptr, node->right, buffer, buffer_len);
 }
-
-void WriteTree(FILE *fptr, PQNode *node) {}
 
 // return how many zeros are used to complete padding
 unsigned padding(FILE *fptr, unsigned char *buffer, unsigned char *buffer_len) {
@@ -386,7 +384,6 @@ void GenerateBinary(FILE *fptr, char *source, unsigned int sourceSize,
   assert(bodyPaddingLength < 8);
 
   unsigned char totalPadding = (headerPaddingLength << 4) | (bodyPaddingLength);
-  // FIXME add padding info
   fseek(fptr, 1, SEEK_SET);
   unsigned char buffer = 0, buffer_len = 0;
   WriteByte(fptr, &buffer, &buffer_len, totalPadding);
