@@ -64,7 +64,16 @@ char *Load_File(char *Filename, unsigned int *Size, unsigned *NumDistinctChar,
   return ch;
 }
 
-char *Decode(char *Filename, unsigned int *Size, unsigned *LeaveSize) {
+void ReadHeader(FILE *fptr, unsigned char *NumLeaf, unsigned char *treePadding,
+                unsigned char *filePadding) {
+  unsigned char buffer = 0;
+  fread(NumLeaf, sizeof(unsigned char), 1, fptr);
+  fread(&buffer, sizeof(unsigned char), 1, fptr);
+  *treePadding = (buffer & 0xF0) >> 4;
+  *filePadding = buffer & 0x0F;
+}
+
+char *Decode(char *Filename) {
   int byte = 0;
   unsigned int counter = 0;
   long int capacity = INIT_STRING;
@@ -77,6 +86,9 @@ char *Decode(char *Filename, unsigned int *Size, unsigned *LeaveSize) {
     printf("Cannot open the file %s\n", Filename);
     exit(1);
   }
+
+  unsigned char NumLeaf = 0, treePadding = 0, filePadding = 0;
+  ReadHeader(fptr, &NumLeaf, &treePadding, &filePadding);
 
   fclose(fptr);
   return ch;

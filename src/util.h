@@ -21,6 +21,8 @@ char *Load_File(char *Filename, unsigned int *Size, unsigned *NumDistinctChar,
 char *LoadFile(char *Filename, unsigned int *Size, unsigned *NumDistinctChar,
                unsigned int **DistinctChars, int **Frequency);
 
+char *Decode(char *Filename);
+
 void NewHNode(PQNode *node, char ch, unsigned int freq, PQNode *left,
               PQNode *right);
 
