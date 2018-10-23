@@ -64,13 +64,104 @@ char *Load_File(char *Filename, unsigned int *Size, unsigned *NumDistinctChar,
   return ch;
 }
 
-void ReadHeader(FILE *fptr, unsigned char *NumLeaf, unsigned char *treePadding,
+void ReadHeader(FILE *fptr, unsigned int *NumLeaf, unsigned char *treePadding,
                 unsigned char *filePadding) {
   unsigned char buffer = 0;
   fread(NumLeaf, sizeof(unsigned char), 1, fptr);
+  // NOTE add 1 to NumLeaf because we defined it. Check assumption part.
+  *NumLeaf += 1;
   fread(&buffer, sizeof(unsigned char), 1, fptr);
   *treePadding = (buffer & 0xF0) >> 4;
   *filePadding = buffer & 0x0F;
+}
+
+int ReadBit(FILE *fptr, unsigned char *buffer, unsigned char *buffer_len) {
+  assert(*buffer_len < 9);
+  if (*buffer_len == 0) {
+    fread(buffer, sizeof(unsigned char), 1, fptr);
+    *buffer_len = 8;
+  }
+  unsigned char mask = 1 << (*buffer_len - 1);
+  *buffer_len -= 1;
+  return *buffer & mask;
+}
+
+unsigned char ReadByte(FILE *fptr, unsigned char *buffer,
+                       unsigned char *buffer_len) {
+  assert(*buffer_len < 9);
+  unsigned char temp = 0xFF, counter = 8, bit;
+  while (counter > 0) {
+    bit = ReadBit(fptr, buffer, buffer_len);
+    temp &= (bit << (counter - 1));
+  }
+  return temp;
+}
+
+// FIXME Remove me
+// A utility function to print an array of size n
+void printArr(int arr[], int n) {
+  int i;
+  for (i = 0; i < n; ++i) printf("%d", arr[i]);
+
+  printf("\n");
+}
+
+void printCodes(PQNode *root, int arr[], int top)
+
+{
+  // Assign 0 to left edge and recur
+  if (root->left) {
+    arr[top] = 0;
+    printCodes(root->left, arr, top + 1);
+  }
+
+  // Assign 1 to right edge and recur
+  if (root->right) {
+    arr[top] = 1;
+    printCodes(root->right, arr, top + 1);
+  }
+
+  // If this is a leaf node, then
+  // it contains one of the input
+  // characters, print the character
+  // and its code from arr[]
+  if (!(root->right) && !(root->left)) {
+    printf("%3d: ", root->value);
+    printArr(arr, top);
+  }
+}
+
+PQNode *NewPQNode(unsigned char value, PQNode *left, PQNode *right) {
+  PQNode *node = malloc(sizeof(PQNode));
+  node->value = value;
+  node->left = left;
+  node->right = right;
+  return node;
+}
+
+PQNode *ReadNode(FILE *fptr, unsigned char *buffer, unsigned char *buffer_len,
+                 unsigned int *ExistingLeaves) {
+  // FIXME  0 <= ExistingLeaves <= 255, how do I know I reach the end of tree
+  // part?
+  assert(*ExistingLeaves < 257);
+  if (*ExistingLeaves == 0) return NULL;
+  printf("ExistingLeaves %u\n", *ExistingLeaves);
+  if (ReadBit(fptr, buffer, buffer_len) == 1) {
+    *ExistingLeaves = *ExistingLeaves - 1;
+    printf("ExistingLeaves %u\n", *ExistingLeaves);
+    return NewPQNode(ReadByte(fptr, buffer, buffer_len), NULL, NULL);
+  }
+  PQNode *left = ReadNode(fptr, buffer, buffer_len, ExistingLeaves);
+  PQNode *right = ReadNode(fptr, buffer, buffer_len, ExistingLeaves);
+  // FIXME should I keep this line in order to terminate the recursion?
+  //if ((right == NULL) && (left == NULL)) return NULL;
+  return NewPQNode('$', left, right);
+}
+
+PQNode *TreeConstruction(FILE *fptr, unsigned int *ExistingLeaves) {
+  unsigned char buffer = 0;
+  unsigned char buffer_len = 0;
+  return ReadNode(fptr, &buffer, &buffer_len, ExistingLeaves);
 }
 
 char *Decode(char *Filename) {
@@ -87,8 +178,17 @@ char *Decode(char *Filename) {
     exit(1);
   }
 
-  unsigned char NumLeaf = 0, treePadding = 0, filePadding = 0;
+  unsigned int NumLeaf = 0;
+  unsigned char treePadding = 0, filePadding = 0;
   ReadHeader(fptr, &NumLeaf, &treePadding, &filePadding);
+  // FIXME infinite loop in tree contrsction
+  PQNode *root = TreeConstruction(fptr, &NumLeaf);
+
+  // FIXME remove me
+  int arr[100], top = 0;
+  printCodes(root, arr, top);
+  printf("\n\n\n\n");
+  //
 
   fclose(fptr);
   return ch;
@@ -140,7 +240,7 @@ void build_huffman_tree(PQNode *root, unsigned int DistinctChars,
 };
 */
 
-PQNode *build_huffman_trie(unsigned char NumDistinctChar,
+PQNode *build_huffman_trie(unsigned int NumDistinctChar,
                            unsigned char *DistincChars, int *Frequency) {
   PQueue *pq =
       CreateAndBuildPriorityQueue(NumDistinctChar, DistincChars, Frequency);
@@ -215,7 +315,7 @@ void char_build_codebook(char **arr_string, PQNode *node, char *binary) {
 */
 
 void build_codebook(char **arr_string, unsigned char *UniqueCharList,
-                    unsigned char NumUniqueChar, PQNode *node) {
+                    unsigned int NumUniqueChar, PQNode *node) {
   _build_codebook(arr_string, node, "");
   /*
     FIXME if the above approach doesn't work, try the old method.
@@ -334,8 +434,8 @@ unsigned padding(FILE *fptr, unsigned char *buffer, unsigned char *buffer_len) {
  * Assumption:
  * 3 bytes of file
  * --------------------------------------------------------------------------------
- * | number of leaves, 8bits | file end pading info 8bits | tree xbtis | empty 1
- * byte | content / binary
+ * | exact number of leaves - 1, less than exact number by 1, 8bits | file end
+ * pading info 8bits | tree xbtis | empty 1 byte | content / binary
  * --------------------------------------------------------------------------------
  * 1. first 8 bits: how many leaf nodes in the tree (in hexidecimal) (should
  * exclude EOF).
@@ -345,10 +445,11 @@ unsigned padding(FILE *fptr, unsigned char *buffer, unsigned char *buffer_len) {
 void GenerateBinaryHeader(FILE *fptr, unsigned int *headerSize, char **codebook,
                           unsigned int leaf_counter, PQNode *root,
                           unsigned *paddingNum) {
-  assert(leaf_counter < 257 && leaf_counter >= 2);
+  assertf(leaf_counter < 257 && leaf_counter > 0,
+          "Leaf Counter (%u) zero is not allowed\n", leaf_counter);
 
   // Generate header info
-  unsigned char firstByte = (unsigned char)(leaf_counter & 0xFF);
+  unsigned char firstByte = (unsigned char)(leaf_counter - 1);
   unsigned char secondByte = 0;
   int i = 0;
 
@@ -379,7 +480,7 @@ void GenerateBinaryBody(FILE *fptr, char *source, unsigned int sourceSize,
 };
 
 void GenerateBinary(FILE *fptr, char *source, unsigned int sourceSize,
-                    char **codebook, unsigned char codebookSize, PQNode *root) {
+                    char **codebook, unsigned int codebookSize, PQNode *root) {
   unsigned int headerSize = 0;
   unsigned int leaf_counter = codebookSize;
   unsigned headerPaddingLength = 0;
@@ -401,7 +502,7 @@ void GenerateBinary(FILE *fptr, char *source, unsigned int sourceSize,
 };
 
 void WriteFile(char *Filename, char *source, unsigned int sourceSize,
-               char **codebook, unsigned char codebookSize, PQNode *root) {
+               char **codebook, unsigned int codebookSize, PQNode *root) {
   FILE *fptr;
   fptr = fopen(Filename, "wb");
 

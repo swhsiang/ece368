@@ -1,8 +1,19 @@
+#include <errno.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "pq.h"
+
+#define clean_errno() (errno == 0 ? "None" : strerror(errno))
+#define log_error(M, ...)                                                   \
+  fprintf(stderr, "[ERROR] (%s:%d: errno: %s) " M "\n", __FILE__, __LINE__, \
+          clean_errno(), ##__VA_ARGS__)
+#define assertf(A, M, ...)       \
+  if (!(A)) {                    \
+    log_error(M, ##__VA_ARGS__); \
+    assert(A);                   \
+  }
 
 #define INIT_STRING 1000
 #define CHAR_GROW_FACTOR 0.3
@@ -28,11 +39,11 @@ void NewHNode(PQNode *node, char ch, unsigned int freq, PQNode *left,
 
 void build_huffman_tree(PQNode *root, unsigned int Size, int *Frequency);
 
-PQNode *build_huffman_trie(unsigned char NumDistinctChar,
+PQNode *build_huffman_trie(unsigned int NumDistinctChar,
                            unsigned char *DistincChars, int *Frequency);
 
 void build_codebook(char **arr_string, unsigned char *UniqueCharList,
-                    unsigned char NumUniqueChar, PQNode *node);
+                    unsigned int NumUniqueChar, PQNode *node);
 
 void add_pseudo_eof(char **arr_string, PQNode *node, char *binary);
 
@@ -44,7 +55,7 @@ void print_huffman_tree(PQNode *node);
  * Should store the codebook in the begining of the binary.
  */
 void GenerateBinary(FILE *fptr, char *source, unsigned int sourceSize,
-                    char **codebook, unsigned char codebookSize, PQNode *root);
+                    char **codebook, unsigned int codebookSize, PQNode *root);
 
 void WriteFile(char *Filename, char *source, unsigned int sourceSize,
-               char **codebook, unsigned char codebookSize, PQNode *root);
+               char **codebook, unsigned int codebookSize, PQNode *root);
