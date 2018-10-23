@@ -17,7 +17,7 @@ int main(int Argc, char **Argv) {
 
   // 2. Read file
   unsigned int fileSize = 0;
-  unsigned numUniqueChar = 0;
+  unsigned int numUniqueChar = 0;
   unsigned char *uniqueCharList =
       (unsigned char *)malloc(sizeof(unsigned char));
   int *frequency = (int *)malloc(sizeof(int));

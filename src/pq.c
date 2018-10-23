@@ -27,7 +27,7 @@ PQueue *createPriorityQueue(int capacity) {
   return pq;
 }
 
-PQueue *CreateAndBuildPriorityQueue(int size, unsigned char *value,
+PQueue *CreateAndBuildPriorityQueue(unsigned int size, unsigned char *value,
                                     int *frequency) {
   PQueue *pq = createPriorityQueue(size);
   int i = 0;
